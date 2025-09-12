@@ -1,0 +1,23 @@
+---
+# Naor Golan
+# 09/11/2025
+
+#This will create an SMB share
+
+#Creates the share first on the server
+- name: Create SMB share
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: Ensure share folder exists
+      ansible.windows.win_file:
+        path: C:\Cyber_Shards
+        state: directory
+#Shares the share drive on the network
+    - name: Create share "Cyber_Shards"
+      ansible.windows.win_share:
+        name: Cyber_Shards
+        path: C:\Cyber_Shards
+        description: "Cyber Shard Storage"
+        read_access: "Authenticated Users"
+        full_access: "Administrators"

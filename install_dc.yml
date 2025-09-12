@@ -1,0 +1,33 @@
+---
+# Naor Golan
+# 09/11/2025
+
+#This will creat and promot the DC and initiate reboot post installation
+
+#This will promote the server to DC
+- name: create and promote to Domain Controller (new forest)
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: install AD DS + DNS
+      ansible.windows.win_feature:
+        name:
+          - AD-Domain-Services
+          - DNS
+        include_management_tools: true
+        state: present
+#This will creat a new forest and promote the dc to it
+    - name: promote to new forest
+      community.windows.win_domain:
+        dns_domain_name: REDACTED.local
+        domain_netbios_name: REDACTED
+        safe_mode_password: REDACTED
+        state: domain_controller
+        create_dns_delegation: no
+      register: promote
+#reboots the server for full installation completion
+    - name: Reboot if required
+      ansible.windows.win_reboot:
+        msg: "Ansible induced reboot due to promoting DC"
+        pre_reboot_delay: 60
+      when: domain_setup.reboot_required

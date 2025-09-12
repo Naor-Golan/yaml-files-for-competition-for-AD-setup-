@@ -1,0 +1,20 @@
+---
+# Naor Golan
+# 09/11/2025
+
+#This will populate the share with random file
+
+#Creates a random file with random name
+- name: Put a random txt file in the share
+  hosts: windows
+  gather_facts: no
+  tasks:
+    - name: Make random name
+      ansible.builtin.set_fact:
+        rnd: "{{ lookup('password', '/dev/null length=6 chars=digits') }}"
+
+#populates the files with random garbage
+    - name: Drop a random text file
+      ansible.windows.win_copy:
+        content: "Hello from Ansible ({{ rnd }})"
+        dest: "C:\\Cyber_Shards\\readme-{{ rnd }}.txt"
