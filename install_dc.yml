@@ -18,13 +18,13 @@
         state: present
 #This will creat a new forest and promote the dc to it
     - name: promote to new forest
-      community.windows.win_domain:
-        dns_domain_name: REDACTED.local
-        domain_netbios_name: REDACTED
-        safe_mode_password: REDACTED
-        state: domain_controller
+      ansible.windows.win_domain:
+        dns_domain_name: "ng3201.local"
+        domain_netbios_name: ng3201
+        safe_mode_password: "Naor1998"
+        state: domain
         create_dns_delegation: no
-      register: promote
+      register: domain_setup
 #reboots the server for full installation completion
     - name: Reboot if required
       ansible.windows.win_reboot:
