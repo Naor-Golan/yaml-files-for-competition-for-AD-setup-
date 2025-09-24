@@ -1,7 +1,6 @@
 ---
 # Naor Golan
 # Sonia Iusupova
----
 - name: Configure Cortex (AD/DC + DNS + SMB) without new modules
   hosts: cortex
   gather_facts: no
