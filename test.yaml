@@ -60,12 +60,11 @@
 
     - name: Create folder for SMB share
       ansible.windows.win_file:
-        path: "C:\\Shares\\Public"
+        path: 'C:\Shares\Public'
         state: directory
 
     - name: Create SMB share (PowerShell)
       ansible.windows.win_shell: |
         if (-not (Get-SmbShare -Name "Public" -ErrorAction SilentlyContinue)) {
-          New-SmbShare -Name "Public" -Path "C:\\Shares\\Public" -FullAccess Everyone
+          New-SmbShare -Name "Public" -Path "C:\Shares\Public" -FullAccess Everyone
         }
-
