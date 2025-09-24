@@ -2,19 +2,17 @@
 # Naor Golan
 # Sonia Iusupova
 
-# Configure AD + DNS + SMB on cortex
-
-    - name: Configure Cortex (AD/DC + DNS + SMB)
-      hosts: cortex
-      gather_facts: no
-      tasks:
-        - name: Install AD-DS and DNS
-          ansible.windows.win_feature:
-            name:
-              - AD-Domain-Services
-              - DNS
-            include_management_tools: true
-            state: present
+- name: Configure Cortex (AD/DC + DNS + SMB)
+  hosts: cortex
+  gather_facts: no
+  tasks:
+    - name: Install AD-DS and DNS
+      ansible.windows.win_feature:
+        name:
+          - AD-Domain-Services
+          - DNS
+        include_management_tools: true
+        state: present
 
     - name: Set local Administrator password (Domain Admin password)
       ansible.windows.win_user:
@@ -27,8 +25,8 @@
         dns_domain_name: "net.runner"
         domain_netbios_name: "NETRUNNER"
         install_dns: true
-        safe_mode_password: "braindance"
-        create_dns_delegation: no
+        safe_mode_password: "Br@indance123!"   # must meet complexity
+        create_dns_delegation: false
       register: domain_setup
 
     - name: Reboot the DC if required
@@ -37,7 +35,6 @@
         pre_reboot_delay: 60
       when: domain_setup.reboot_required
 
-    # DNS forward zone
     - name: Ensure forward zone exists
       ansible.windows.win_dns_zone:
         name: "net.runner"
@@ -46,6 +43,7 @@
         state: present
 
     - name: Add A record for cortex
+        # If you want host only, use name: "cortex"
       ansible.windows.win_dns_record:
         zone: "net.runner"
         name: "cortex.net.runner"
@@ -53,16 +51,15 @@
         value: "100.65.1.125"
         state: present
 
-    # SMB share
-    - name: Create a folder for SMB share
+    - name: Create folder for SMB share
       ansible.windows.win_file:
-        path: C:\Shares\Public
+        path: "C:\\Shares\\Public"
         state: directory
 
     - name: Create SMB share
       ansible.windows.win_share:
-        name: Public
+        name: "Public"
         description: "Public SMB Share"
-        path: C:\Shares\Public
+        path: "C:\\Shares\\Public"
         full: "Everyone"
         state: present
