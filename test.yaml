@@ -1,8 +1,8 @@
 ---
 # Naor Golan
 # Sonia Iusupova
-
-- name: Configure Cortex (AD/DC + DNS + SMB)
+---
+- name: Configure Cortex (AD/DC + DNS + SMB) without new modules
   hosts: cortex
   gather_facts: no
   tasks:
@@ -20,46 +20,38 @@
         password: "Naor1998"
         state: present
 
-    - name: Promote DC to new forest
-      microsoft.ad.domain:
-        dns_domain_name: "net.runner"
-        domain_netbios_name: "NETRUNNER"
-        install_dns: true
-        safe_mode_password: "Br@indance123!"   # must meet complexity
-        create_dns_delegation: false
-      register: domain_setup
+    - name: Promote DC to new forest (PowerShell)
+      ansible.windows.win_shell: |
+        Install-ADDSForest `
+          -DomainName "net.runner" `
+          -DomainNetbiosName "NETRUNNER" `
+          -SafeModeAdministratorPassword (ConvertTo-SecureString "Naor1998" -AsPlainText -Force) `
+          -InstallDNS `
+          -Force
 
-    - name: Reboot the DC if required
+    - name: Reboot after promotion
       ansible.windows.win_reboot:
-        msg: "Reboot after promoting DC"
+        msg: "Rebooting after domain promotion"
         pre_reboot_delay: 60
-      when: domain_setup.reboot_required
 
-    - name: Ensure forward zone exists
-      ansible.windows.win_dns_zone:
-        name: "net.runner"
-        type: primary
-        replication: Domain
-        state: present
+    - name: Ensure forward DNS zone exists (PowerShell)
+      ansible.windows.win_shell: |
+        if (-not (Get-DnsServerZone -Name "net.runner" -ErrorAction SilentlyContinue)) {
+          Add-DnsServerPrimaryZone -Name "net.runner" -ReplicationScope "Domain"
+        }
 
-    - name: Add A record for cortex
-        # If you want host only, use name: "cortex"
-      ansible.windows.win_dns_record:
-        zone: "net.runner"
-        name: "cortex.net.runner"
-        type: A
-        value: "100.65.1.125"
-        state: present
+    - name: Add A record for cortex (PowerShell)
+      ansible.windows.win_shell: |
+        Add-DnsServerResourceRecordA -ZoneName "net.runner" -Name "cortex" -IPv4Address "100.65.1.125" -CreatePtr
 
     - name: Create folder for SMB share
       ansible.windows.win_file:
         path: "C:\\Shares\\Public"
         state: directory
 
-    - name: Create SMB share
-      ansible.windows.win_share:
-        name: "Public"
-        description: "Public SMB Share"
-        path: "C:\\Shares\\Public"
-        full: "Everyone"
-        state: present
+    - name: Create SMB share (PowerShell)
+      ansible.windows.win_shell: |
+        if (-not (Get-SmbShare -Name "Public" -ErrorAction SilentlyContinue)) {
+          New-SmbShare -Name "Public" -Path "C:\\Shares\\Public" -FullAccess Everyone
+        }
+
