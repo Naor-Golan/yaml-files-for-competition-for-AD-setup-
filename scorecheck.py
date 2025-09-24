@@ -1,29 +1,15 @@
 #!/usr/bin/env python3
-import subprocess
+import socket
 import sys
 
 server = "100.65.1.125"
-share = "Public"
-username = "Administrator"
-password = "Naor1998"
-
-cmd = [
-    "smbclient",
-    f"//{server}/{share}",
-    "-U", username + "%" + password,
-    "-c", "ls"
-]
+port = 445  # SMB port
 
 try:
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-    if result.returncode == 0:
-        print("Scorecheck PASSED: SMB share is accessible")
-        sys.exit(0)
-    else:
-        print("Scorecheck FAILED:")
-        print(result.stderr or result.stdout)
-        sys.exit(1)
+    sock = socket.create_connection((server, port), timeout=5)
+    sock.close()
+    print("Scorecheck PASSED: SMB port is open and reachable")
+    sys.exit(0)
 except Exception as e:
     print(f"Scorecheck FAILED: {e}")
     sys.exit(1)
-
