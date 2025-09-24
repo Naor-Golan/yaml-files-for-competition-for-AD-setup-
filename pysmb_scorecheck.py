@@ -14,9 +14,11 @@ try:
     connected = conn.connect(server, 445, timeout=5)
     conn.close()
     if connected:
+        print("Code 0")
         sys.exit(0)
 except Exception as e:
     # Optional: print debug info
+    print("Code 1")
     print("Error:", e)
     sys.exit(1)
 
