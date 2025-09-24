@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
-from smb.SMBConnection import SMBConnection
+import subprocess
 import sys
 
-server = "100.65.1.125"    # cortex IP
-share = "Public"           # SMB share name
+server = "100.65.1.125"
+share = "Public"
 username = "Administrator"
 password = "Naor1998"
-domain   = "NETRUNNER"     # Your AD domain NetBIOS name
+
+cmd = [
+    "smbclient",
+    f"//{server}/{share}",
+    "-U", username + "%" + password,
+    "-c", "ls"
+]
 
 try:
-    conn = SMBConnection(username, password, "scorechecker", "cortex",
-                         domain=domain, use_ntlm_v2=True, is_direct_tcp=True)
-    connected = conn.connect(server, 445, timeout=5)
-    conn.close()
-    if connected:
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    if result.returncode == 0:
+        print("Scorecheck PASSED: SMB share is accessible")
         sys.exit(0)
+    else:
+        print("Scorecheck FAILED:")
+        print(result.stderr or result.stdout)
+        sys.exit(1)
 except Exception as e:
-    # Optional: print debug info
-    print("Error:", e)
+    print(f"Scorecheck FAILED: {e}")
     sys.exit(1)
 
-sys.exit(1)
