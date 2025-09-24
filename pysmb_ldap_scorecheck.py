@@ -3,6 +3,8 @@
 # Naor Golan
 # Requires: pysmb, ldap3  (install inside venv if system packages are locked)
 
+# READ HERE::: As it currently stands, I am not sure if we will be using SMB. If we arent, comment the smb related function out (line  41, and alter 44).
+
 from smb.SMBConnection import SMBConnection
 from ldap3 import Server, Connection, ALL
 import sys
@@ -40,9 +42,8 @@ if __name__ == "__main__":
     ldap_ok = check_ldap()
 
     if smb_ok and ldap_ok:
-        print("All good")
+        #print("All good")
         sys.exit(0)   # success if BOTH checks work
     else:
-        print("Not good")
+        #print("Not good")
         sys.exit(1)   # fail if either check fails
-
