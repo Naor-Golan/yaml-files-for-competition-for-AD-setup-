@@ -40,7 +40,9 @@ if __name__ == "__main__":
     ldap_ok = check_ldap()
 
     if smb_ok and ldap_ok:
+        print("All good")
         sys.exit(0)   # success if BOTH checks work
     else:
+        print("Not good")
         sys.exit(1)   # fail if either check fails
 
