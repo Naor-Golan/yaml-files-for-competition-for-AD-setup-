@@ -1,6 +1,7 @@
 ---
 # Naor Golan
 # Sonia Iusupova
+
 - name: Configure Cortex (AD/DC + DNS + SMB) without new modules
   hosts: cortex
   gather_facts: no
@@ -21,12 +22,14 @@
 
     - name: Promote DC to new forest (PowerShell)
       ansible.windows.win_shell: |
-        Install-ADDSForest `
-          -DomainName "net.runner" `
-          -DomainNetbiosName "NETRUNNER" `
-          -SafeModeAdministratorPassword (ConvertTo-SecureString "Naor1998" -AsPlainText -Force) `
-          -InstallDNS `
-          -Force
+        if (-not (Get-ADDomain -ErrorAction SilentlyContinue)) {
+          Install-ADDSForest `
+            -DomainName "net.runner" `
+            -DomainNetbiosName "NETRUNNER" `
+            -SafeModeAdministratorPassword (ConvertTo-SecureString "Br@indance123!" -AsPlainText -Force) `
+            -InstallDNS `
+            -Force
+        }
 
     - name: Reboot after promotion
       ansible.windows.win_reboot:
@@ -39,9 +42,21 @@
           Add-DnsServerPrimaryZone -Name "net.runner" -ReplicationScope "Domain"
         }
 
-    - name: Add A record for cortex (PowerShell)
+    - name: Ensure reverse DNS zone exists (PowerShell)
       ansible.windows.win_shell: |
-        Add-DnsServerResourceRecordA -ZoneName "net.runner" -Name "cortex" -IPv4Address "100.65.1.125" -CreatePtr
+        if (-not (Get-DnsServerZone -Name "1.65.100.in-addr.arpa" -ErrorAction SilentlyContinue)) {
+          Add-DnsServerPrimaryZone -NetworkId "100.65.1.0/24" -ReplicationScope "Domain"
+        }
+
+    - name: Add A record for cortex (PowerShell, with PTR if reverse zone exists)
+      ansible.windows.win_shell: |
+        if (-not (Get-DnsServerResourceRecord -ZoneName "net.runner" -Name "cortex" -ErrorAction SilentlyContinue)) {
+          try {
+            Add-DnsServerResourceRecordA -ZoneName "net.runner" -Name "cortex" -IPv4Address "100.65.1.125" -CreatePtr
+          } catch {
+            Add-DnsServerResourceRecordA -ZoneName "net.runner" -Name "cortex" -IPv4Address "100.65.1.125"
+          }
+        }
 
     - name: Create folder for SMB share
       ansible.windows.win_file:
